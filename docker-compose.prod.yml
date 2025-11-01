@@ -1,0 +1,18 @@
+services:
+  api:
+    image: afd-api:latest
+    container_name: afd-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data:rw
+    environment:
+      - TZ=America/Guatemala
+      - ENVIRONMENT=production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

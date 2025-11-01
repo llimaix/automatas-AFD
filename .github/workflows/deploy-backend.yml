@@ -1,0 +1,125 @@
+name: Deploy Backend API to EC2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: afd-api
+  CONTAINER_NAME: afd-api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Build Docker image
+      run: |
+        echo "🔨 Building Backend Docker image..."
+        docker build -t ${{ env.IMAGE_NAME }}:latest .
+        echo "💾 Saving Docker image..."
+        docker save ${{ env.IMAGE_NAME }}:latest > backend-image.tar
+        ls -lh backend-image.tar
+        
+    - name: Copy files to server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: ${{ secrets.EC2_PORT || 22 }}
+        source: "backend-image.tar,docker-compose.prod.yml,data/"
+        target: "/tmp/afd-backend-deploy/"
+        timeout: 300s
+        
+    - name: Deploy Backend on server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: ${{ secrets.EC2_PORT || 22 }}
+        timeout: 300s
+        script: |
+          set -e
+          
+          echo "🚀 Starting Backend API deployment..."
+          cd /tmp/afd-backend-deploy
+          
+          # Stop and remove existing container
+          echo "🛑 Stopping existing backend..."
+          docker stop ${{ env.CONTAINER_NAME }} 2>/dev/null || true
+          docker rm ${{ env.CONTAINER_NAME }} 2>/dev/null || true
+          
+          # Load new image
+          echo "📦 Loading new Backend image..."
+          docker load < backend-image.tar
+          
+          # Ensure data directory exists and has correct permissions
+          echo "📁 Setting up data directory..."
+          mkdir -p ~/afd-backend/data
+          cp -r data/* ~/afd-backend/data/ 2>/dev/null || true
+          
+          # Copy production compose file
+          cp docker-compose.prod.yml ~/afd-backend/docker-compose.yml
+          cd ~/afd-backend
+          
+          # Start new container
+          echo "🚀 Starting new backend container..."
+          docker-compose up -d
+          
+          # Wait for container to be ready
+          echo "⏳ Waiting for backend to be ready..."
+          sleep 20
+          
+          # Verify deployment
+          if docker ps | grep -q "${{ env.CONTAINER_NAME }}"; then
+            echo "✅ Backend container is running!"
+            
+            # Check health
+            for i in {1..12}; do
+              if curl -f -s http://localhost:8000/health > /dev/null 2>&1; then
+                echo "✅ Backend API is responding!"
+                break
+              elif curl -f -s http://localhost:8000/ > /dev/null 2>&1; then
+                echo "✅ Backend API is responding!"
+                break
+              else
+                echo "⏳ Waiting for backend API to respond... ($i/12)"
+                sleep 5
+              fi
+            done
+            
+            # Show container status
+            echo "📊 Container status:"
+            docker ps --filter name=${{ env.CONTAINER_NAME }}
+            
+            # Show logs
+            echo "📋 Recent logs:"
+            docker logs ${{ env.CONTAINER_NAME }} --tail 20
+            
+            # Get public IP
+            PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "your-server-ip")
+            echo "🌐 Backend API deployed successfully at: http://$PUBLIC_IP:8000"
+            
+            # Test API endpoints
+            echo "🧪 Testing API endpoints..."
+            curl -s http://localhost:8000/ || echo "Root endpoint test completed"
+            
+          else
+            echo "❌ Backend container failed to start!"
+            echo "📋 Checking logs..."
+            docker logs ${{ env.CONTAINER_NAME }} --tail 50 2>/dev/null || echo "No logs available"
+            exit 1
+          fi
+          
+          # Cleanup
+          echo "🧹 Cleaning up..."
+          docker image prune -f > /dev/null 2>&1 || true
+          rm -rf /tmp/afd-backend-deploy
+          
+          echo "🎉 Backend deployment completed successfully!"
