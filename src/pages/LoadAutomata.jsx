@@ -14,11 +14,12 @@ export default function LoadAutomata() {
       const formData = new FormData();
       formData.append("file", file);
 
-      // Sube el archivo al backend (opcional, si habilitas /upload)
-      // const upload = await api.post("/upload", formData);
-
-      // Para este proyecto asumimos que el archivo ya está en /app/data/automatas.txt
-      const res = await api.post("/load", { path: "/app/data/automatas.txt" });
+      // Subir y cargar el archivo seleccionado
+      const res = await api.post("/upload", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       setResponse(res.data);
     } catch (err) {
       alert(err.response?.data?.detail || "Error al cargar el archivo");
@@ -82,9 +83,15 @@ export default function LoadAutomata() {
         <div className="mt-8 bg-gray-700/50 border border-gray-600 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-green-400 text-xl">✅</span>
-            <h3 className="text-lg font-semibold text-white">Autómatas cargados exitosamente</h3>
+            <h3 className="text-lg font-semibold text-white">
+              {response.filename ? `Archivo "${response.filename}" cargado exitosamente` : 'Autómatas cargados exitosamente'}
+            </h3>
           </div>
+          {response.message && (
+            <p className="text-gray-300 mb-4">{response.message}</p>
+          )}
           <div className="bg-gray-800 rounded-lg p-4">
+            <h4 className="text-white font-medium mb-2">Autómatas encontrados:</h4>
             <ul className="space-y-2">
               {response.loaded?.map((a, index) => (
                 <li key={a} className="flex items-center gap-2 text-gray-300">
