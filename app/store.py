@@ -29,9 +29,9 @@ class AutomataStore:
             raise KeyError(f"No existe el autómata: {name}")
         return self._dfas[name]
 
-    def check(self, name: str, word: str) -> dict:
+    def check(self, name: str, word: str, max_length: int = 10000) -> dict:
         dfa = self.get(name)
-        ok, path = dfa.simulate(word)
+        ok, path = dfa.simulate(word, max_length=max_length)
         return {
             "automata": name,
             "word": word,

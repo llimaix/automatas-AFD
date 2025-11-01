@@ -1,0 +1,37 @@
+# Ejemplo 5: Testing de Límites y Casos Extremos
+# Este archivo prueba los límites del sistema y casos edge
+
+# AFD mínimo (solo acepta cadena vacía)
+1:SOLO_VACIO:q0
+2:SOLO_VACIO:a
+3:SOLO_VACIO:q0
+4:SOLO_VACIO:q0
+5:SOLO_VACIO:q0,a,q0
+
+# AFD que nunca acepta (estado final inalcanzable)
+1:NUNCA_ACEPTA:q0,q1,inalcanzable
+2:NUNCA_ACEPTA:a,b
+3:NUNCA_ACEPTA:q0
+4:NUNCA_ACEPTA:inalcanzable
+5:NUNCA_ACEPTA:q0,a,q1;q0,b,q0;q1,a,q0;q1,b,q1
+
+# AFD con muchos estados finales
+1:MUCHOS_FINALES:s0,s1,s2,s3,s4,s5,s6,s7,s8,s9
+2:MUCHOS_FINALES:x,y
+3:MUCHOS_FINALES:s0
+4:MUCHOS_FINALES:s1,s2,s3,s4,s5,s6,s7,s8,s9
+5:MUCHOS_FINALES:s0,x,s1;s0,y,s2;s1,x,s3;s1,y,s4;s2,x,s5;s2,y,s6;s3,x,s7;s3,y,s8;s4,x,s9;s4,y,s0;s5,x,s0;s5,y,s1;s6,x,s2;s6,y,s3;s7,x,s4;s7,y,s5;s8,x,s6;s8,y,s7;s9,x,s8;s9,y,s9
+
+# AFD con estado inicial también final
+1:INICIAL_ES_FINAL:init,other
+2:INICIAL_ES_FINAL:go,stop
+3:INICIAL_ES_FINAL:init
+4:INICIAL_ES_FINAL:init,other
+5:INICIAL_ES_FINAL:init,go,other;init,stop,init;other,go,init;other,stop,other
+
+# AFD con símbolos de un solo carácter pero nombres largos
+1:ESTADOS_LARGOS:estado_inicial_muy_largo,estado_intermedio_procesando,estado_final_aceptacion,estado_rechazo_definitivo
+2:ESTADOS_LARGOS:simbolo_a,simbolo_b,simbolo_c
+3:ESTADOS_LARGOS:estado_inicial_muy_largo
+4:ESTADOS_LARGOS:estado_final_aceptacion
+5:ESTADOS_LARGOS:estado_inicial_muy_largo,simbolo_a,estado_intermedio_procesando;estado_inicial_muy_largo,simbolo_b,estado_rechazo_definitivo;estado_inicial_muy_largo,simbolo_c,estado_rechazo_definitivo;estado_intermedio_procesando,simbolo_a,estado_rechazo_definitivo;estado_intermedio_procesando,simbolo_b,estado_final_aceptacion;estado_intermedio_procesando,simbolo_c,estado_rechazo_definitivo;estado_final_aceptacion,simbolo_a,estado_rechazo_definitivo;estado_final_aceptacion,simbolo_b,estado_rechazo_definitivo;estado_final_aceptacion,simbolo_c,estado_rechazo_definitivo;estado_rechazo_definitivo,simbolo_a,estado_rechazo_definitivo;estado_rechazo_definitivo,simbolo_b,estado_rechazo_definitivo;estado_rechazo_definitivo,simbolo_c,estado_rechazo_definitivo

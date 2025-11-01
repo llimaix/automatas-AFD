@@ -1,0 +1,23 @@
+# Ejemplo 2: AFDs Incompletos para Testing de Robustez
+# Este archivo contiene AFDs con transiciones faltantes para probar el manejo de incompletitud
+
+# AFD incompleto - falta transición desde q1 con 'b'
+1:INCOMPLETO_1:q0,q1,q2
+2:INCOMPLETO_1:a,b
+3:INCOMPLETO_1:q0
+4:INCOMPLETO_1:q2
+5:INCOMPLETO_1:q0,a,q1;q0,b,q0;q1,a,q2;q2,a,q2;q2,b,q0
+
+# AFD incompleto - múltiples transiciones faltantes
+1:INCOMPLETO_2:s1,s2,s3
+2:INCOMPLETO_2:x,y,z
+3:INCOMPLETO_2:s1
+4:INCOMPLETO_2:s3
+5:INCOMPLETO_2:s1,x,s2;s2,y,s3
+
+# AFD que será completado por merge posterior
+1:PARA_MERGE:p0,p1
+2:PARA_MERGE:0,1
+3:PARA_MERGE:p0
+4:PARA_MERGE:p1
+5:PARA_MERGE:p0,0,p1
