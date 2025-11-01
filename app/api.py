@@ -1,8 +1,18 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from .store import store
 
 app = FastAPI(title="AFD Recognizer", version="1.0")
+
+# Configuración CORS - permitir todos los orígenes
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permite cualquier origen
+    allow_credentials=True,
+    allow_methods=["*"],  # Permite todos los métodos HTTP
+    allow_headers=["*"],  # Permite todos los headers
+)
 
 class LoadRequest(BaseModel):
     path: str  # ruta en el contenedor, p.ej. /app/data/automatas.txt
