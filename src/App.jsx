@@ -67,7 +67,7 @@ export default function App() {
           </button>
         </div>
 
-        {/* Quick Demo Button */}
+        {/* Quick Demo Button 
         <div className="flex justify-center mb-6">
           <button
             onClick={() => {
@@ -78,6 +78,7 @@ export default function App() {
             💡 Ver notificación de ejemplo
           </button>
         </div>
+        */}
 
         {/* Content */}
         <div className="flex justify-center">
