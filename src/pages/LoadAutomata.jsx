@@ -60,48 +60,11 @@ export default function LoadAutomata({ addNotification }) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await api.post("/upload", formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 30000, // 30 segundos
-      });
-      
-      setResponse(res.data);
-      
-      // Notificación de éxito
-      if (addNotification) {
-        addNotification(
-          `✅ Archivo subido exitosamente. ${res.data.count || 0} autómatas cargados.`,
-          'success'
-        );
-      }
-    } catch (err) {
-      const errorMessage = err.response?.data?.detail || err.message || "Error al subir el archivo";
-      setError(errorMessage);
-      
-      // Notificación de error
-      if (addNotification) {
-        addNotification(`❌ Error al subir archivo: ${errorMessage}`, 'error');
-      }
-      
-      console.error("Upload error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      // Sube el archivo al backend (opcional, si habilitas /upload)
+      // const upload = await api.post("/upload", formData);
 
-  const handleLoadFromPath = async () => {
-    if (!pathInput.trim()) {
-      setError("Ingresa una ruta válida");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const res = await api.post("/load", { path: pathInput.trim() });
+      // Para este proyecto asumimos que el archivo ya está en /app/data/automatas.txt
+      const res = await api.post("/load", { path: "/app/data/automatas.txt" });
       setResponse(res.data);
       
       // Notificación de éxito
@@ -283,45 +246,20 @@ export default function LoadAutomata({ addNotification }) {
         <div className="mt-8 bg-gray-700/50 border border-gray-600 rounded-lg p-6">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-green-400 text-xl">✅</span>
-            <h3 className="text-lg font-semibold text-white">Operación exitosa</h3>
+            <h3 className="text-lg font-semibold text-white">Autómatas cargados exitosamente</h3>
           </div>
-          
-          {/* Response Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="bg-gray-800 rounded-lg p-3">
-              <p className="text-sm text-gray-400">Mensaje</p>
-              <p className="text-white font-medium">{response.message || "Carga completada"}</p>
-            </div>
-            <div className="bg-gray-800 rounded-lg p-3">
-              <p className="text-sm text-gray-400">Autómatas cargados</p>
-              <p className="text-white font-bold text-lg">{response.count || response.loaded?.length || 0}</p>
-            </div>
+          <div className="bg-gray-800 rounded-lg p-4">
+            <ul className="space-y-2">
+              {response.loaded?.map((a, index) => (
+                <li key={a} className="flex items-center gap-2 text-gray-300">
+                  <span className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                    {index + 1}
+                  </span>
+                  <span className="font-mono">{a}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-
-          {/* Loaded Automata List */}
-          {response.loaded && response.loaded.length > 0 && (
-            <div className="bg-gray-800 rounded-lg p-4">
-              <h4 className="text-white font-medium mb-3">Autómatas disponibles:</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {response.loaded.map((a, index) => (
-                  <div key={a} className="flex items-center gap-2 text-gray-300 bg-gray-700 rounded px-3 py-2">
-                    <span className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
-                      {index + 1}
-                    </span>
-                    <span className="font-mono text-sm">{a}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Additional Info */}
-          {response.filename && (
-            <div className="mt-3 text-sm text-gray-400">
-              <span>Archivo procesado: </span>
-              <span className="font-mono text-gray-300">{response.filename}</span>
-            </div>
-          )}
         </div>
       )}
     </div>
