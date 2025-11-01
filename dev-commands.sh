@@ -7,11 +7,11 @@ echo "=============================================="
 case "$1" in
   "build")
     echo "🔨 Construyendo imagen Docker..."
-    docker build -t automatas-afd-frontend:latest .
+    docker build -t afd-api:latest .
     ;;
   "run")
     echo "🚀 Ejecutando contenedor localmente..."
-    docker run -d -p 80:80 --name automatas-afd-frontend automatas-afd-frontend:latest
+    docker run -d -p 80:80 --name afd-api afd-api:latest
     echo "✅ Aplicación disponible en: http://localhost"
     ;;
   "dev")
@@ -20,12 +20,12 @@ case "$1" in
     ;;
   "logs")
     echo "📋 Mostrando logs del contenedor..."
-    docker logs -f automatas-afd-frontend
+    docker logs -f afd-api
     ;;
   "stop")
     echo "🛑 Deteniendo contenedor..."
-    docker stop automatas-afd-frontend
-    docker rm automatas-afd-frontend
+    docker stop afd-api
+    docker rm afd-api
     ;;
   "clean")
     echo "🧹 Limpiando recursos Docker..."

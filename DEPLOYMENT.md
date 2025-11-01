@@ -103,7 +103,7 @@ También puedes activar el despliegue manualmente desde GitHub:
     └── docker-compose.yml
 
 Docker Containers:
-└── automatas-afd-frontend:latest
+└── afd-api:latest
     ├── /usr/share/nginx/html/ (aplicación)
     └── /etc/nginx/conf.d/default.conf
 ```
@@ -117,16 +117,16 @@ Docker Containers:
 docker ps
 
 # Ver logs del contenedor
-docker logs automatas-afd-frontend
+docker logs afd-api
 
 # Verificar estado del contenedor
-docker inspect automatas-afd-frontend
+docker inspect afd-api
 
 # Reiniciar contenedor si es necesario
 docker-compose restart
 
 # Ver estadísticas de recursos
-docker stats automatas-afd-frontend
+docker stats afd-api
 ```
 
 ### Verificar la aplicación:
@@ -150,7 +150,7 @@ http://TU-IP-EC2
 ### Error común: Contenedor no inicia
 ```bash
 # Ver logs detallados
-docker logs automatas-afd-frontend --tail 50
+docker logs afd-api --tail 50
 
 # Verificar imagen
 docker images | grep automatas-afd
@@ -215,7 +215,7 @@ docker images
 docker-compose down
 
 # Cambiar a imagen anterior y reiniciar
-docker tag automatas-afd-frontend:backup automatas-afd-frontend:latest
+docker tag afd-api:backup afd-api:latest
 docker-compose up -d
 ```
 

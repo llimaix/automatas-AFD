@@ -3,7 +3,7 @@ version: '3.8'
 services:
   frontend:
     build: .
-    container_name: automatas-afd-frontend
+    container_name: afd-api
     ports:
       - "80:80"
     restart: unless-stopped
