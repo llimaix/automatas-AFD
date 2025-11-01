@@ -24,10 +24,10 @@ export default function App() {
       <div className="bg-gray-800/50 backdrop-blur-md border-b border-gray-700">
         <div className="container mx-auto px-6 py-4">
           <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            🤖 Reconocedor de Palabras (AFD) - Versión Mejorada
+            Reconocedor de Palabras (AFD)
           </h1>
           <p className="text-center text-gray-400 text-sm mt-2">
-            Sistema robusto con validaciones avanzadas y análisis detallado
+            Sistema con validaciones avanzadas y análisis detallado
           </p>
         </div>
       </div>
@@ -88,6 +88,7 @@ export default function App() {
       </div>
 
       {/* Footer with Features */}
+      {/*      
       <div className="bg-gray-800/30 border-t border-gray-700 mt-16">
         <div className="container mx-auto px-6 py-8">
           <div className="text-center">
@@ -113,6 +114,7 @@ export default function App() {
           </div>
         </div>
       </div>
+      {/* */}
     </div>
   );
 }
