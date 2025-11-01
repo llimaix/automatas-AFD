@@ -1,87 +1,106 @@
 #!/bin/bash
-# Script de comandos útiles para desarrollo local
+# Development commands for Automatas AFD Frontend
 
-echo "🐳 Comandos útiles para Automatas AFD Frontend"
-echo "=============================================="
+IMAGE_NAME="automatas-afd-frontend"
+CONTAINER_NAME="automatas-afd-frontend"
+
+echo "🐳 Automatas AFD Frontend - Development Commands"
+echo "================================================"
 
 case "$1" in
   "build")
-    echo "🔨 Construyendo imagen Docker..."
-    docker build -t automatas-afd-frontend:latest .
+    echo "🔨 Building Docker image..."
+    docker build -t $IMAGE_NAME:latest .
+    echo "✅ Build completed!"
     ;;
+    
   "run")
-    echo "🚀 Ejecutando contenedor localmente..."
-    docker run -d -p 80:80 --name automatas-afd-frontend automatas-afd-frontend:latest
-    echo "✅ Aplicación disponible en: http://localhost"
+    echo "🚀 Running container locally..."
+    docker stop $CONTAINER_NAME 2>/dev/null || true
+    docker rm $CONTAINER_NAME 2>/dev/null || true
+    docker run -d -p 80:80 --name $CONTAINER_NAME $IMAGE_NAME:latest
+    echo "✅ Container started at: http://localhost"
     ;;
+    
   "dev")
-    echo "🔧 Iniciando servidor de desarrollo..."
+    echo "🔧 Starting development server..."
     npm run dev
     ;;
+    
   "logs")
-    echo "📋 Mostrando logs del contenedor..."
-    docker logs -f automatas-afd-frontend
+    echo "📋 Showing container logs..."
+    docker logs -f $CONTAINER_NAME
     ;;
+    
   "stop")
-    echo "🛑 Deteniendo contenedor..."
-    docker stop automatas-afd-frontend
-    docker rm automatas-afd-frontend
+    echo "🛑 Stopping container..."
+    docker stop $CONTAINER_NAME 2>/dev/null || true
+    docker rm $CONTAINER_NAME 2>/dev/null || true
+    echo "✅ Container stopped"
     ;;
+    
+  "status")
+    echo "📊 Container status:"
+    docker ps --filter name=$CONTAINER_NAME
+    echo ""
+    echo "� Health check:"
+    curl -f http://localhost/health 2>/dev/null && echo "✅ Healthy" || echo "❌ Not responding"
+    ;;
+    
   "clean")
-    echo "🧹 Limpiando recursos Docker..."
+    echo "🧹 Cleaning Docker resources..."
     docker system prune -f
     docker image prune -f
+    echo "✅ Cleanup completed"
     ;;
-  "compose-up")
-    echo "🚀 Iniciando con Docker Compose (desarrollo)..."
-    docker-compose -f docker-compose.dev.yml up -d
-    echo "✅ Aplicación disponible en: http://localhost"
-    ;;
-  "compose-down")
-    echo "🛑 Deteniendo Docker Compose..."
-    docker-compose -f docker-compose.dev.yml down
-    ;;
-  "compose-logs")
-    echo "📋 Mostrando logs de Docker Compose..."
-    docker-compose -f docker-compose.dev.yml logs -f
-    ;;
+    
   "test-build")
-    echo "🧪 Probando build completo..."
+    echo "🧪 Testing build process..."
     npm ci
     npm run build
-    echo "✅ Build completado exitosamente"
+    echo "✅ Build test completed"
     ;;
+    
   "test-deploy")
-    echo "🧪 Probando despliegue completo localmente..."
-    echo "🔨 Construyendo imagen..."
-    docker build -t automatas-afd-frontend:latest .
-    echo "💾 Guardando imagen..."
-    docker save automatas-afd-frontend:latest > frontend-image.tar
-    echo "📦 Cargando imagen..."
+    echo "🧪 Testing complete deployment..."
+    echo "1️⃣ Building image..."
+    docker build -t $IMAGE_NAME:latest .
+    
+    echo "2️⃣ Saving image..."
+    docker save $IMAGE_NAME:latest > frontend-image.tar
+    
+    echo "3️⃣ Loading image..."
     docker load < frontend-image.tar
-    echo "🚀 Iniciando con docker-compose..."
+    
+    echo "4️⃣ Starting with compose..."
     docker-compose up -d
-    echo "✅ Despliegue local completado!"
-    echo "🌐 Aplicación disponible en: http://localhost"
+    
+    echo "5️⃣ Testing health..."
+    sleep 5
+    if curl -f http://localhost/ > /dev/null 2>&1; then
+      echo "✅ Deployment test successful!"
+    else
+      echo "❌ Deployment test failed"
+    fi
+    
     rm frontend-image.tar
     ;;
+    
   *)
     echo ""
-    echo "Comandos disponibles:"
-    echo "  ./dev-commands.sh build         - Construir imagen Docker"
-    echo "  ./dev-commands.sh run           - Ejecutar contenedor"
-    echo "  ./dev-commands.sh dev           - Servidor de desarrollo"
-    echo "  ./dev-commands.sh logs          - Ver logs del contenedor"
-    echo "  ./dev-commands.sh stop          - Detener contenedor"
-    echo "  ./dev-commands.sh clean         - Limpiar recursos Docker"
-    echo "  ./dev-commands.sh compose-up    - Iniciar con Docker Compose (dev)"
-    echo "  ./dev-commands.sh compose-down  - Detener Docker Compose"
-    echo "  ./dev-commands.sh compose-logs  - Ver logs de Compose"
-    echo "  ./dev-commands.sh test-build    - Probar build local"
-    echo "  ./dev-commands.sh test-deploy   - Probar despliegue completo"
+    echo "Available commands:"
+    echo "  build       - Build Docker image"
+    echo "  run         - Run container locally"
+    echo "  dev         - Start development server"
+    echo "  logs        - Show container logs"
+    echo "  stop        - Stop and remove container"
+    echo "  status      - Show container status and health"
+    echo "  clean       - Clean Docker resources"
+    echo "  test-build  - Test npm build process"
+    echo "  test-deploy - Test complete deployment flow"
     echo ""
-    echo "Ejemplos:"
+    echo "Examples:"
     echo "  ./dev-commands.sh build && ./dev-commands.sh run"
-    echo "  ./dev-commands.sh compose-up"
+    echo "  ./dev-commands.sh test-deploy"
     ;;
 esac

@@ -1,254 +1,154 @@
-# � Guía de Despliegue EC2 con Docker
+# 🚀 Deployment Guide - Automatas AFD Frontend
 
-Esta guía te ayudará a configurar el despliegue automático de tu frontend en EC2 usando Docker y GitHub Actions.
+Simple and robust deployment setup for your React frontend using Docker and GitHub Actions.
 
-## 📋 Prerrequisitos
+## 🎯 Quick Start
 
-1. **Servidor EC2** con Ubuntu 20.04+ 
-2. **Acceso SSH** al servidor
-3. **Repositorio GitHub** con permisos de administrador
-4. **Docker** y **Docker Compose** (se instalan automáticamente)
+### 1. Server Setup (One-time)
 
-## 🔧 Configuración del Servidor EC2
-
-### Paso 1: Preparar el servidor
-
-Conéctate a tu servidor EC2 y ejecuta el script de configuración:
+Connect to your EC2 server and run:
 
 ```bash
-# Conectarse al servidor
-ssh -i tu-clave.pem ubuntu@tu-ip-ec2
+ssh -i your-key.pem ubuntu@your-server-ip
 
-# Descargar y ejecutar script de configuración
+# Download and run setup script
 wget https://raw.githubusercontent.com/llimaix/automatas-AFD/main/scripts/setup-ec2.sh
 chmod +x setup-ec2.sh
 ./setup-ec2.sh
 
-# IMPORTANTE: Desconectarse y volver a conectar para que los cambios tomen efecto
+# Log out and back in for Docker permissions
 exit
-ssh -i tu-clave.pem ubuntu@tu-ip-ec2
+ssh -i your-key.pem ubuntu@your-server-ip
 ```
 
-O puedes copiar y pegar el script manualmente desde `scripts/setup-ec2.sh`.
+### 2. GitHub Secrets
 
-### Paso 2: Configurar Security Groups
+Add these secrets in your GitHub repository (Settings → Secrets → Actions):
 
-Asegúrate de que tu EC2 tenga estos puertos abiertos:
-- **Puerto 22** (SSH)
-- **Puerto 80** (HTTP)
-- **Puerto 443** (HTTPS - opcional)
+| Secret | Value | Example |
+|--------|-------|---------|
+| `EC2_HOST` | Your server IP | `54.123.456.789` |
+| `EC2_USER` | SSH username | `ubuntu` |
+| `EC2_SSH_KEY` | Private SSH key content | `-----BEGIN RSA...` |
 
-## 🔐 Configuración de GitHub Secrets
+### 3. Deploy
 
-Ve a tu repositorio en GitHub → Settings → Secrets and variables → Actions
+Push to `main` or `front` branch → Automatic deployment! 🎉
 
-Agrega estos secrets:
+## 📁 Project Structure
 
-| Secret Name | Descripción | Ejemplo |
-|-------------|-------------|---------|
-| `EC2_HOST` | IP pública de tu EC2 | `54.123.456.789` |
-| `EC2_USER` | Usuario SSH (normalmente `ubuntu`) | `ubuntu` |
-| `EC2_SSH_KEY` | Clave privada SSH completa | `-----BEGIN RSA PRIVATE KEY-----...` |
-| `EC2_PORT` | Puerto SSH (opcional, default: 22) | `22` |
+```
+├── Dockerfile              # Multi-stage build
+├── docker-compose.yml      # Production container config
+├── nginx.conf              # Nginx configuration
+├── .github/workflows/      
+│   └── deploy.yml          # Deployment workflow
+├── scripts/
+│   └── setup-ec2.sh        # Server setup script
+└── dev-commands.sh         # Development utilities
+```
 
-### Cómo obtener la clave SSH:
+## 🛠️ Development Commands
 
 ```bash
-# En tu máquina local, muestra el contenido de tu clave privada
-cat ~/.ssh/tu-clave.pem
+# Build and test locally
+./dev-commands.sh build
+./dev-commands.sh run
 
-# Copia TODO el contenido, incluyendo las líneas BEGIN y END
+# Development server
+./dev-commands.sh dev
+
+# View logs
+./dev-commands.sh logs
+
+# Test complete deployment flow
+./dev-commands.sh test-deploy
+
+# Clean up resources
+./dev-commands.sh clean
 ```
 
-## � Arquitectura del Despliegue
+## 🔍 Monitoring & Troubleshooting
 
-### Dockerfile Multi-stage
-- **Stage 1**: Build de la aplicación con Node.js
-- **Stage 2**: Servir con Nginx optimizado
-
-### Docker Compose
-- Gestión de contenedores
-- Configuración de red
-- Health checks
-- Restart automático
-
-## �🚀 Proceso de Despliegue
-
-### Despliegue Automático
-
-El despliegue se activa automáticamente cuando:
-- Haces push a las ramas `main` o `front`
-- Se crea un Pull Request hacia `main`
-
-### Proceso completo:
-1. **Build**: Construye la imagen Docker de la aplicación
-2. **Transfer**: Envía la imagen al servidor EC2
-3. **Deploy**: Detiene contenedores anteriores y inicia el nuevo
-4. **Verify**: Verifica que el contenedor esté funcionando
-
-### Despliegue Manual
-
-También puedes activar el despliegue manualmente desde GitHub:
-1. Ve a tu repositorio → Actions
-2. Selecciona "Deploy Frontend to EC2 with Docker"
-3. Click en "Run workflow"
-
-## 📁 Estructura en el Servidor
-
-```
-~/automatas-afd/
-├── docker-compose.yml
-└── /tmp/automatas-deploy/
-    ├── frontend-image.tar
-    └── docker-compose.yml
-
-Docker Containers:
-└── afd-api:latest
-    ├── /usr/share/nginx/html/ (aplicación)
-    └── /etc/nginx/conf.d/default.conf
-```
-
-## 🔍 Verificar el Despliegue
-
-### Comandos útiles en el servidor:
-
+### Check deployment status:
 ```bash
-# Ver contenedores en ejecución
+# On server
 docker ps
+docker logs automatas-afd-frontend
 
-# Ver logs del contenedor
-docker logs afd-api
-
-# Verificar estado del contenedor
-docker inspect afd-api
-
-# Reiniciar contenedor si es necesario
-docker-compose restart
-
-# Ver estadísticas de recursos
-docker stats afd-api
+# Health check
+curl http://localhost/health
 ```
 
-### Verificar la aplicación:
+### Common issues:
+
+**Container not starting:**
 ```bash
-# Probar la aplicación
-curl -I http://localhost
-
-# Ver respuesta completa
-curl http://localhost
-```
-
-## 🌐 Acceder a la Aplicación
-
-Después del despliegue exitoso, tu aplicación estará disponible en:
-```
-http://TU-IP-EC2
-```
-
-## 🛠️ Troubleshooting
-
-### Error común: Contenedor no inicia
-```bash
-# Ver logs detallados
-docker logs afd-api --tail 50
-
-# Verificar imagen
-docker images | grep automatas-afd
-
-# Reiniciar contenedor
-docker-compose down && docker-compose up -d
-```
-
-### Error: Puerto ocupado
-```bash
-# Ver qué está usando el puerto 80
-sudo netstat -tulpn | grep :80
-
-# Detener contenedor anterior
-docker stop $(docker ps -q --filter "publish=80")
-```
-
-### Error de permisos Docker
-```bash
-# Agregar usuario al grupo docker
-sudo usermod -aG docker $USER
-
-# Reiniciar sesión SSH
-exit
-ssh -i tu-clave.pem ubuntu@tu-ip-ec2
-```
-
-### Error de conexión SSH en GitHub Actions
-1. Verifica que la IP en `EC2_HOST` sea correcta
-2. Asegúrate de que el Security Group permita SSH desde cualquier IP (0.0.0.0/0)
-3. Verifica que la clave SSH esté completa en el secret
-
-## 📈 Monitoreo
-
-### Ver el progreso del despliegue:
-1. Ve a GitHub → Actions
-2. Selecciona el workflow en ejecución
-3. Observa los logs en tiempo real
-
-### Health Check automático:
-El contenedor incluye un health check que verifica cada 30 segundos si la aplicación responde correctamente.
-
-```bash
-# Ver estado del health check
-docker ps --format "table {{.Names}}\t{{.Status}}"
-```
-
-## 🔄 Rollback
-
-Si necesitas hacer rollback a una versión anterior:
-
-1. Ve a GitHub Actions
-2. Encuentra un despliegue exitoso anterior
-3. Click en "Re-run all jobs"
-
-### Rollback manual:
-```bash
-# Ver imágenes disponibles
-docker images
-
-# Detener contenedor actual
-docker-compose down
-
-# Cambiar a imagen anterior y reiniciar
-docker tag afd-api:backup afd-api:latest
+docker logs automatas-afd-frontend
 docker-compose up -d
 ```
 
-## 🧹 Mantenimiento
-
-### Limpieza automática:
-El script configura una tarea cron que limpia recursos Docker no utilizados cada domingo a las 2 AM.
-
-### Limpieza manual:
+**Port 80 busy:**
 ```bash
-# Limpiar imágenes no utilizadas
-docker image prune -f
-
-# Limpiar todo el sistema
-docker system prune -f
-
-# Ver uso de espacio
-docker system df
+sudo netstat -tulpn | grep :80
+docker stop $(docker ps -q --filter "publish=80")
 ```
 
-## 📊 Ventajas del Despliegue con Docker
+**Permission denied:**
+```bash
+sudo usermod -aG docker $USER
+# Log out and back in
+```
 
-✅ **Aislamiento**: La aplicación corre en su propio entorno aislado
-✅ **Consistencia**: Mismo entorno en desarrollo y producción
-✅ **Escalabilidad**: Fácil de escalar horizontalmente
-✅ **Rollback rápido**: Cambios instantáneos entre versiones
-✅ **Gestión de dependencias**: Todas las dependencias incluidas en la imagen
-✅ **Seguridad**: Aislamiento a nivel de sistema operativo
+## 🚀 Deployment Flow
 
-## 📞 Soporte
+1. **Push** → GitHub Actions triggered
+2. **Build** → Docker image created
+3. **Transfer** → Image sent to server
+4. **Deploy** → Old container stopped, new started
+5. **Verify** → Health checks performed
+6. **Cleanup** → Old images removed
 
-Si tienes problemas:
-1. Revisa los logs de GitHub Actions
-2. Verifica los logs del contenedor Docker
-3. Asegúrate de que todos los secrets estén configurados correctamente
-4. Verifica que Docker esté funcionando en el servidor
+## 🔐 Security Features
+
+- ✅ No source code on server
+- ✅ Containerized isolation  
+- ✅ Security headers configured
+- ✅ Minimal attack surface
+- ✅ Automated updates
+
+## 📊 Performance Features
+
+- ✅ Multi-stage Docker build
+- ✅ Gzip compression
+- ✅ Static asset caching
+- ✅ Health monitoring
+- ✅ Zero-downtime deployments
+
+## 🎛️ Configuration
+
+### Environment Variables
+Configure in `docker-compose.yml`:
+```yaml
+environment:
+  - NODE_ENV=production
+  - API_URL=https://api.example.com  # Add as needed
+```
+
+### Nginx Tuning
+Modify `nginx.conf` for custom:
+- Cache policies
+- Security headers  
+- Rate limiting
+- SSL termination
+
+## 🆘 Support
+
+1. **GitHub Actions logs** - Check workflow execution
+2. **Container logs** - `docker logs automatas-afd-frontend`
+3. **Nginx logs** - `/var/log/nginx/` on server
+4. **Health endpoint** - `http://your-server/health`
+
+---
+
+**🎉 That's it! Your app deploys automatically on every push.**

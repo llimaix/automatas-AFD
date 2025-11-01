@@ -1,28 +1,31 @@
-name: Deploy Frontend to EC2 with Docker
+name: Deploy Frontend to EC2
 
 on:
   push:
-    branches: [ main, front ]
-  pull_request:
-    branches: [ main ]
+    branches: [main, front]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: automatas-afd-frontend
+  CONTAINER_NAME: automatas-afd-frontend
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v4
-      
-    - name: Setup Docker Buildx
-      uses: docker/setup-buildx-action@v3
       
     - name: Build Docker image
       run: |
-        docker build -t automatas-afd-frontend:latest .
-        docker save automatas-afd-frontend:latest > frontend-image.tar
+        echo "🔨 Building Docker image..."
+        docker build -t ${{ env.IMAGE_NAME }}:latest .
+        echo "💾 Saving Docker image..."
+        docker save ${{ env.IMAGE_NAME }}:latest > frontend-image.tar
+        ls -lh frontend-image.tar
         
-    - name: Copy files to EC2
+    - name: Copy files to server
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.EC2_HOST }}
@@ -31,67 +34,76 @@ jobs:
         port: ${{ secrets.EC2_PORT || 22 }}
         source: "frontend-image.tar,docker-compose.yml"
         target: "/tmp/automatas-deploy/"
+        timeout: 300s
         
-    - name: Deploy with Docker on EC2
+    - name: Deploy on server
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         port: ${{ secrets.EC2_PORT || 22 }}
+        timeout: 300s
         script: |
-          echo "🚀 Iniciando despliegue con Docker..."
+          set -e
           
-          # Navegar al directorio de despliegue
+          echo "🚀 Starting deployment..."
           cd /tmp/automatas-deploy
           
-          # Detener y remover contenedores existentes
-          echo "🛑 Deteniendo contenedores existentes..."
-          docker compose down 2>/dev/null || true
-          docker stop automatas-afd-frontend 2>/dev/null || true
-          docker rm automatas-afd-frontend 2>/dev/null || true
+          # Stop and remove existing containers
+          echo "🛑 Stopping existing services..."
+          docker stop ${{ env.CONTAINER_NAME }} 2>/dev/null || true
+          docker rm ${{ env.CONTAINER_NAME }} 2>/dev/null || true
           
-          # Cargar la nueva imagen
-          echo "📦 Cargando nueva imagen Docker..."
+          # Load new image
+          echo "📦 Loading new Docker image..."
           docker load < frontend-image.tar
           
-          # Limpiar imágenes antiguas
-          echo "🧹 Limpiando imágenes antiguas..."
-          docker image prune -f
-          
-          # Iniciar el nuevo contenedor
-          echo "🚀 Iniciando nuevo contenedor..."
+          # Start new container
+          echo "🚀 Starting new container..."
           docker compose up -d
           
-          # Verificar que el contenedor esté funcionando
-          echo "✅ Verificando estado del contenedor..."
-          sleep 10
+          # Wait for container to be ready
+          echo "⏳ Waiting for container to be ready..."
+          sleep 15
           
-          if docker ps | grep -q automatas-afd-frontend; then
-            echo "✅ Contenedor iniciado exitosamente!"
+          # Verify deployment
+          if docker ps | grep -q "${{ env.CONTAINER_NAME }}"; then
+            echo "✅ Container is running!"
             
-            # Obtener IP pública
-            PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "tu-ip-ec2")
+            # Check health
+            for i in {1..12}; do
+              if curl -f -s http://localhost/ > /dev/null 2>&1; then
+                echo "✅ Application is responding!"
+                break
+              else
+                echo "⏳ Waiting for application to respond... ($i/12)"
+                sleep 5
+              fi
+            done
             
-            echo "🌐 Aplicación disponible en: http://$PUBLIC_IP"
+            # Show container status
+            echo "📊 Container status:"
+            docker ps --filter name=${{ env.CONTAINER_NAME }}
             
-            # Mostrar logs del contenedor
-            echo "📋 Últimos logs del contenedor:"
-            docker logs automatas-afd-frontend --tail 20
+            # Show logs
+            echo "📋 Recent logs:"
+            docker logs ${{ env.CONTAINER_NAME }} --tail 10
             
-            # Verificar respuesta HTTP
-            if curl -f -s http://localhost/ > /dev/null; then
-              echo "✅ Aplicación respondiendo correctamente!"
-            else
-              echo "⚠️ Aplicación no responde en el puerto 80"
-            fi
+            # Get public IP
+            PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "your-server-ip")
+            echo "🌐 Application deployed successfully at: http://$PUBLIC_IP"
+            
           else
-            echo "❌ Error: El contenedor no se inició correctamente"
-            docker logs automatas-afd-frontend --tail 50
+            echo "❌ Container failed to start!"
+            echo "📋 Checking logs..."
+            docker logs ${{ env.CONTAINER_NAME }} --tail 50 2>/dev/null || echo "No logs available"
             exit 1
           fi
           
-          # Limpiar archivos temporales
+          # Cleanup
+          echo "🧹 Cleaning up..."
+          docker image prune -f > /dev/null 2>&1 || true
           rm -rf /tmp/automatas-deploy
           
-          echo "🎉 ¡Despliegue completado exitosamente!"
+          echo "🎉 Deployment completed successfully!"

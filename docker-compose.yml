@@ -1,23 +1,13 @@
 services:
-  frontend:
+  app:
     image: automatas-afd-frontend:latest
     container_name: automatas-afd-frontend
     ports:
       - "80:80"
     restart: unless-stopped
-    networks:
-      - automatas-network
-    environment:
-      - NODE_ENV=production
-    labels:
-      - "com.docker.compose.project=automatas-afd"
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "curl", "-f", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-networks:
-  automatas-network:
-    driver: bridge
