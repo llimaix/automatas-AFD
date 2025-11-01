@@ -28,6 +28,13 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 MAX_WORD_LENGTH = 10000
 MAX_AUTOMATA_NAME_LENGTH = 100
 
+@app.on_event("startup")
+async def startup_event():
+    """Inicializa el store al arrancar la aplicación"""
+    logger.info("🚀 Iniciando AFD Recognizer API...")
+    store.initialize()
+    logger.info("✅ Store inicializado correctamente")
+
 class LoadRequest(BaseModel):
     path: str  # ruta en el contenedor, p.ej. /app/data/automatas.txt
     
@@ -238,4 +245,45 @@ def get_automata_info(name: str):
         raise HTTPException(status_code=404, detail=f"Autómata '{name}' no encontrado")
     except Exception as e:
         logger.error(f"Error obteniendo info de {name}: {e}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+@app.post("/admin/clear")
+def clear_all_automatas():
+    """Limpia todos los autómatas de la memoria (admin)"""
+    try:
+        store.clear_all()
+        return {"message": "Todos los autómatas han sido eliminados de memoria", "success": True}
+    except Exception as e:
+        logger.error(f"Error limpiando autómatas: {e}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+@app.post("/admin/reset")
+def reset_to_defaults():
+    """Resetea a los autómatas por defecto (admin)"""
+    try:
+        store.reset_to_defaults()
+        return {
+            "message": "Store reseteado a autómatas por defecto",
+            "automata": store.list(),
+            "count": len(store.list()),
+            "success": True
+        }
+    except Exception as e:
+        logger.error(f"Error reseteando a defaults: {e}")
+        raise HTTPException(status_code=500, detail="Error interno del servidor")
+
+@app.get("/admin/status")
+def get_store_status():
+    """Obtiene el estado actual del store (admin)"""
+    try:
+        automata_list = store.list()
+        return {
+            "automata_count": len(automata_list),
+            "automata": automata_list,
+            "storage_type": "memory_only",
+            "default_file_exists": os.path.exists("/app/data/automatas.txt"),
+            "note": "Los autómatas se mantienen solo en memoria durante la sesión del servidor"
+        }
+    except Exception as e:
+        logger.error(f"Error obteniendo status: {e}")
         raise HTTPException(status_code=500, detail="Error interno del servidor")

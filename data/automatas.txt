@@ -3,3 +3,9 @@
 3:AF04:q0
 4:AF04:q1
 5:AF04:q0,a,q1;q0,b,q2;q1,a,q1;q1,b,q2;q2,a,q1;q2,b,q0
+
+1:EXAMPLE:inicio,fin
+2:EXAMPLE:0,1
+3:EXAMPLE:inicio
+4:EXAMPLE:fin
+5:EXAMPLE:inicio,0,fin;inicio,1,inicio;fin,0,fin;fin,1,fin
