@@ -82,10 +82,10 @@ jobs:
             
             # Check health
             for i in {1..12}; do
-              if curl -f -s http://localhost:8000/health > /dev/null 2>&1; then
+              if curl -f -s http://localhost:8001/health > /dev/null 2>&1; then
                 echo "✅ Backend API is responding!"
                 break
-              elif curl -f -s http://localhost:8000/ > /dev/null 2>&1; then
+              elif curl -f -s http://localhost:8001/ > /dev/null 2>&1; then
                 echo "✅ Backend API is responding!"
                 break
               else
@@ -104,11 +104,11 @@ jobs:
             
             # Get public IP
             PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "your-server-ip")
-            echo "🌐 Backend API deployed successfully at: http://$PUBLIC_IP:8000"
+            echo "🌐 Backend API deployed successfully at: http://$PUBLIC_IP:8001"
             
             # Test API endpoints
             echo "🧪 Testing API endpoints..."
-            curl -s http://localhost:8000/ || echo "Root endpoint test completed"
+            curl -s http://localhost:8001/ || echo "Root endpoint test completed"
             
           else
             echo "❌ Backend container failed to start!"
